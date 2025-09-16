@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DB_MANT_PORT = exports.DB_MANT_DATABASE = exports.DB_MANT_SERVER = exports.DB_MANT_PASSWORD = exports.DB_MANT_USER = exports.PORT = void 0;
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+exports.PORT = process.env.PORT || 4020;
+exports.DB_MANT_USER = process.env.DB_MANT_USER;
+exports.DB_MANT_PASSWORD = process.env.DB_MANT_PASSWORD;
+exports.DB_MANT_SERVER = process.env.DB_MANT_SERVER;
+exports.DB_MANT_DATABASE = process.env.DB_DATABASE;
+exports.DB_MANT_PORT = parseInt(process.env.DB_PORT || "2021", 10);
