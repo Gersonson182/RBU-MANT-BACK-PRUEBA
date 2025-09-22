@@ -9,6 +9,7 @@ const route_1 = __importDefault(require("./routes/test-connection/route"));
 const index_1 = require("./routes/auth/index");
 const originPage = [
     "http://localhost:5173",
+    "http://localhost:5180",
     "https://mantenimiento.rbu.cl",
     "https://planificacion.rbu.cl",
     "http://planificacion.rbu.cl",

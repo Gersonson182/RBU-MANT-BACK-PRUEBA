@@ -13,11 +13,13 @@ const GET = async (req, res) => {
             pool,
             values: { idUsuario: parseInt(idUsuario) },
         });
+        console.log(">>> API /auth/permisos response (antes de enviar):", permissions);
         if (!permissions)
             return res.status(404).json({ message: "No se encontraron permisos" });
         return res.status(200).json(permissions);
     }
-    catch {
+    catch (error) {
+        console.error(" Error en /auth/permisos:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };

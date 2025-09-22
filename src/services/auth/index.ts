@@ -1,41 +1,44 @@
 import sql, { ConnectionPool } from "mssql";
 
 export const loginUser = async ({
-  pool,
-  values,
+	pool,
+	values,
 }: {
-  pool: ConnectionPool;
-  values: { usuario: string };
+	pool: ConnectionPool;
+	values: { usuario: string };
 }) => {
-  const request = await pool
-    .request()
-    .input("item", sql.SmallInt, 1)
-    .input("user_name", sql.VarChar(50), values.usuario)
-    .execute("sp_login");
+	const request = await pool
+		.request()
+		.input("item", sql.SmallInt, 1)
+		.input("user_name", sql.VarChar(50), values.usuario)
+		.execute("MANT.dbo.sp_login");
 
-  if (!request || !request.recordset || request.recordset.length === 0)
-    return null;
+	if (!request || !request.recordset || request.recordset.length === 0)
+		return null;
 
-  console.log("El request es:", request);
+	console.log("El request es:", request);
 
-  return request.recordset[0];
+	return request.recordset[0];
 };
 
 export const getPermissionsByProfile = async ({
-  pool,
-  values,
+	pool,
+	values,
 }: {
-  pool: ConnectionPool;
-  values: { idUsuario: number };
+	pool: ConnectionPool;
+	values: { idUsuario: number };
 }) => {
-  const request = await pool
-    .request()
-    .input("id_usuario", sql.Int, values.idUsuario)
-    .input("id_sistema", sql.Int, 5)
-    .execute("MAESTRA.dbo.fa_procGetModuleAccess");
+	const request = await pool
+		.request()
+		.input("id_usuario", sql.Int, values.idUsuario)
+		.input("id_sistema", sql.Int, 28)
+		.execute("MAESTRA.dbo.fa_procGetModuleAccess");
 
-  if (!request || !request.recordset || request.recordset.length === 0)
-    return [];
+	console.log(">>> getPermissionsByProfile recordset:", request.recordset);
 
-  return request.recordset[0];
+	if (!request || !request.recordset || request.recordset.length === 0) {
+		return [];
+	}
+
+	return request.recordset;
 };

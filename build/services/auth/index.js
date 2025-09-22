@@ -10,7 +10,7 @@ const loginUser = async ({ pool, values, }) => {
         .request()
         .input("item", mssql_1.default.SmallInt, 1)
         .input("user_name", mssql_1.default.VarChar(50), values.usuario)
-        .execute("sp_login");
+        .execute("MANT.dbo.sp_login");
     if (!request || !request.recordset || request.recordset.length === 0)
         return null;
     console.log("El request es:", request);
@@ -21,10 +21,12 @@ const getPermissionsByProfile = async ({ pool, values, }) => {
     const request = await pool
         .request()
         .input("id_usuario", mssql_1.default.Int, values.idUsuario)
-        .input("id_sistema", mssql_1.default.Int, 5)
+        .input("id_sistema", mssql_1.default.Int, 28)
         .execute("MAESTRA.dbo.fa_procGetModuleAccess");
-    if (!request || !request.recordset || request.recordset.length === 0)
+    console.log(">>> getPermissionsByProfile recordset:", request.recordset);
+    if (!request || !request.recordset || request.recordset.length === 0) {
         return [];
-    return request.recordset[0];
+    }
+    return request.recordset;
 };
 exports.getPermissionsByProfile = getPermissionsByProfile;

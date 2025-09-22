@@ -4,6 +4,6 @@ import { GET } from "../../../../controllers/auth/permisos/[idUsuario]/controlle
 
 const router = Router();
 
-router.get("/:permisos/:idUsuario", asyncHandler(GET));
+router.get("/permisos/:idUsuario", asyncHandler(GET));
 
 export default router;
