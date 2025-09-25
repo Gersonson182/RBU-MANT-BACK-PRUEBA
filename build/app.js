@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const route_1 = __importDefault(require("./routes/test-connection/route"));
 const index_1 = require("./routes/auth/index");
+const index_2 = require("./routes/ordenDeTrabajo/index");
 const originPage = [
     "http://localhost:5173",
     "http://localhost:5180",
@@ -30,4 +31,7 @@ app.use("/api", route_1.default);
 // autentificacion
 app.use("/api/auth", index_1.authRouter);
 app.use("/api/auth", index_1.authPermissionRouter);
+// ordenes de trabajo
+app.use("/api/ordenDeTrabajo", index_2.OTGeneral);
+app.use("/api/ordenDeTrabajo", index_2.filtrosOrdenTrabajo);
 exports.default = app;
