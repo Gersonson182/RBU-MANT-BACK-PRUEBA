@@ -30,8 +30,8 @@ export interface GetOrdenesTrabajoInput {
   nroBus?: number;
   estadoOT?: number;
   tipoOT?: number;
-  fechaIngreso?: string;
-  fechaSalida?: string;
+  fechaIngreso?: string | Date;
+  fechaSalida?: string | Date;
   nroManager?: number;
   pagina?: number;
 }

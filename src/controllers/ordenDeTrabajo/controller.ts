@@ -2,24 +2,31 @@ import { Request, Response } from "express";
 import { connectDB } from "../../helpers/db";
 import { getOrdenesTrabajo } from "../../services/ordenDeTrabajo/services";
 
+const toNumber = (val: any): number | undefined =>
+  val !== undefined && !isNaN(Number(val)) ? Number(val) : undefined;
+
 export const GET = async (req: Request, res: Response) => {
   try {
     const pool = await connectDB();
-    const nroOT = req.query.nroOT ? Number(req.query.nroOT) : undefined;
-    const codTaller = req.query.codTaller
-      ? Number(req.query.codTaller)
+
+    const nroOT = toNumber(req.query.nroOT);
+    const codTaller = toNumber(req.query.codTaller);
+    const nroBus = toNumber(req.query.nroBus);
+    const estadoOT = toNumber(req.query.estadoOT);
+    const tipoOT = toNumber(req.query.tipoOT);
+    const nroManager = toNumber(req.query.nroManager);
+
+    const fechaIngreso = req.query.fechaIngreso
+      ? new Date(req.query.fechaIngreso as string)
       : undefined;
-    const nroBus = req.query.nroBus ? Number(req.query.nroBus) : undefined;
-    const estadoOT = req.query.estadoOT
-      ? Number(req.query.estadoOT)
+
+    const fechaSalida = req.query.fechaSalida
+      ? new Date(req.query.fechaSalida as string)
       : undefined;
-    const tipoOT = req.query.tipoOT ? Number(req.query.tipoOT) : undefined;
-    const fechaIngreso = req.query.fechaIngreso as string | undefined;
-    const fechaSalida = req.query.fechaSalida as string | undefined;
-    const nroManager = req.query.nroManager
-      ? Number(req.query.nroManager)
-      : undefined;
-    const pagina = req.query.pagina ? Number(req.query.pagina) : 0;
+
+    const pageIndex = toNumber(req.query.pagina) ?? 0;
+    const pageSize = 15; // constante, configurable
+    const offset = pageIndex * pageSize;
 
     // llamada al service
     const { data, total } = await getOrdenesTrabajo({
@@ -32,12 +39,14 @@ export const GET = async (req: Request, res: Response) => {
       fechaIngreso,
       fechaSalida,
       nroManager,
-      pagina,
+      pagina: offset,
     });
 
     // respuesta al cliente
     res.json({
       total,
+      pageIndex,
+      pageSize,
       data,
     });
   } catch (error) {

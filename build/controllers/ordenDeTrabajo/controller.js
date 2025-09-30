@@ -3,24 +3,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GET = void 0;
 const db_1 = require("../../helpers/db");
 const services_1 = require("../../services/ordenDeTrabajo/services");
+const toNumber = (val) => val !== undefined && !isNaN(Number(val)) ? Number(val) : undefined;
 const GET = async (req, res) => {
     try {
         const pool = await (0, db_1.connectDB)();
-        const nroOT = req.query.nroOT ? Number(req.query.nroOT) : undefined;
-        const codTaller = req.query.codTaller
-            ? Number(req.query.codTaller)
+        const nroOT = toNumber(req.query.nroOT);
+        const codTaller = toNumber(req.query.codTaller);
+        const nroBus = toNumber(req.query.nroBus);
+        const estadoOT = toNumber(req.query.estadoOT);
+        const tipoOT = toNumber(req.query.tipoOT);
+        const nroManager = toNumber(req.query.nroManager);
+        const fechaIngreso = req.query.fechaIngreso
+            ? new Date(req.query.fechaIngreso)
             : undefined;
-        const nroBus = req.query.nroBus ? Number(req.query.nroBus) : undefined;
-        const estadoOT = req.query.estadoOT
-            ? Number(req.query.estadoOT)
+        const fechaSalida = req.query.fechaSalida
+            ? new Date(req.query.fechaSalida)
             : undefined;
-        const tipoOT = req.query.tipoOT ? Number(req.query.tipoOT) : undefined;
-        const fechaIngreso = req.query.fechaIngreso;
-        const fechaSalida = req.query.fechaSalida;
-        const nroManager = req.query.nroManager
-            ? Number(req.query.nroManager)
-            : undefined;
-        const pagina = req.query.pagina ? Number(req.query.pagina) : 0;
+        const pageIndex = toNumber(req.query.pagina) ?? 0;
+        const pageSize = 15; // constante, configurable
+        const offset = pageIndex * pageSize;
         // llamada al service
         const { data, total } = await (0, services_1.getOrdenesTrabajo)({
             pool,
@@ -32,11 +33,13 @@ const GET = async (req, res) => {
             fechaIngreso,
             fechaSalida,
             nroManager,
-            pagina,
+            pagina: offset,
         });
         // respuesta al cliente
         res.json({
             total,
+            pageIndex,
+            pageSize,
             data,
         });
     }
