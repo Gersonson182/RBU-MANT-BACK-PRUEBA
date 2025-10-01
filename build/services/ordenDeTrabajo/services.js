@@ -25,8 +25,7 @@ const getOrdenesTrabajo = async ({ pool, nroOT, codTaller, nroBus, estadoOT, tip
     };
 };
 exports.getOrdenesTrabajo = getOrdenesTrabajo;
-const getDataFiltrosMant = async (pool) => {
-    // Función helper genérica para no repetir código
+const getDataFiltrosMant = async (pool, tipo) => {
     const executeFilter = async (item) => {
         const { recordset } = await pool
             .request()
@@ -34,17 +33,33 @@ const getDataFiltrosMant = async (pool) => {
             .execute("MANT.dbo.sp_getInfoFiltros");
         return recordset ?? [];
     };
+    if (tipo) {
+        const map = {
+            OTs: 0,
+            talleres: 3,
+            buses: 1,
+            estadosOt: 11,
+            tiposOt: 12,
+            nrosManager: 13,
+            fallaPrincipal: 14,
+            fallaSecundaria: 15,
+            mecanicos: 16,
+            servicios: 17,
+        };
+        return { [tipo]: await executeFilter(map[tipo]) };
+    }
+    // si no hay tipo, traer todo (más lento)
     return {
-        OTs: await executeFilter(0), // Ordenes de trabajo
-        talleres: await executeFilter(3), // Talleres
-        buses: await executeFilter(1), // Buses (flota)
-        estadosOt: await executeFilter(11), // Estados de OT
-        tiposOt: await executeFilter(12), // Tipos de OT
-        nrosManager: await executeFilter(13), // Managers
-        fallaPrincipal: await executeFilter(14), // Falla principal
-        fallaSecundaria: await executeFilter(15), // Falla secundaria
-        mecanicos: await executeFilter(16), // Mecánicos
-        servicios: await executeFilter(17), // Servicios
+        OTs: await executeFilter(0),
+        talleres: await executeFilter(3),
+        buses: await executeFilter(1),
+        estadosOt: await executeFilter(11),
+        tiposOt: await executeFilter(12),
+        nrosManager: await executeFilter(13),
+        fallaPrincipal: await executeFilter(14),
+        fallaSecundaria: await executeFilter(15),
+        mecanicos: await executeFilter(16),
+        servicios: await executeFilter(17),
     };
 };
 exports.getDataFiltrosMant = getDataFiltrosMant;

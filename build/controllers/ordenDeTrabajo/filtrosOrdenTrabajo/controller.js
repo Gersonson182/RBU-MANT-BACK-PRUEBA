@@ -7,19 +7,7 @@ const getDataFiltrosMantController = async (req, res) => {
     try {
         const pool = await (0, db_1.connectDB)();
         const tipo = req.query.tipo;
-        const data = await (0, services_1.getDataFiltrosMant)(pool);
-        if (tipo) {
-            if (data[tipo]) {
-                // devolver solo el filtro pedido
-                return res.status(200).json(data[tipo]);
-            }
-            else {
-                return res
-                    .status(400)
-                    .json({ message: `El filtro '${tipo}' no existe` });
-            }
-        }
-        // si no viene query param devuelve todo
+        const data = await (0, services_1.getDataFiltrosMant)(pool, tipo);
         return res.status(200).json(data);
     }
     catch (error) {
