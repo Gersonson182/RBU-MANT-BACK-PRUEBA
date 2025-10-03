@@ -5,7 +5,12 @@ import testConnectionRouter from "./routes/test-connection/route";
 
 import { authRouter, authPermissionRouter } from "./routes/auth/index";
 
-import { OTGeneral, filtrosOrdenTrabajo } from "./routes/ordenDeTrabajo/index";
+import {
+  OTGeneral,
+  filtrosOrdenTrabajo,
+  subSistemas,
+  idOrdenTrabajo,
+} from "./routes/ordenDeTrabajo/index";
 
 const originPage = [
   "http://localhost:5173",
@@ -39,9 +44,15 @@ app.use("/api", testConnectionRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/auth", authPermissionRouter);
 
-// ordenes de trabajo
-
+////////////////// Ordenes de trabajo ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.use("/api/ordenDeTrabajo", OTGeneral);
 app.use("/api/ordenDeTrabajo", filtrosOrdenTrabajo);
 
+// Ordenes de trabajo - Sistemas y sub sistemas
+app.use("/api/ordenDeTrabajo", subSistemas);
+
+// Ordenes de trabajo - Detalles por id de orden
+app.use("/api/ordenDeTrabajo", idOrdenTrabajo);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export default app;

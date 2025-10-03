@@ -111,3 +111,113 @@ export interface DataFiltrosMant {
   mecanicos: MecanicoFiltro[];
   servicios: ServicioFiltro[];
 }
+
+//// Types de Sistemas y subsistemas por ejemplo: || carroceria - choque propio || etc
+
+export interface SistemaFiltro {
+  id_falla_principal: number;
+  detalle_falla_principal: string;
+}
+
+export interface SubSistemaFiltro {
+  id_falla_secundaria: number;
+  id_falla_principal: number;
+  detalle_falla_secundaria: string;
+}
+
+// CREAR UNA OT DE TRABAJO //
+
+export interface FallaInput {
+  id_falla_principal: number | null;
+  id_falla_secundaria?: number | null;
+  id_personal_falla_principal?: number | null;
+  id_personal_falla_secundaria?: number | null;
+  id_perfil_principal?: number | null;
+  id_perfil_secundaria?: number | null;
+}
+
+export interface CreateOrdenTrabajoInput {
+  id_personal_ingreso: number;
+  id_tipo_orden: number;
+  codigo_flota: number;
+  detalle_ingreso: string;
+  fecha_programada?: string;
+  codigo_taller: number;
+  servicio?: string;
+  fallas: FallaInput[];
+}
+
+export interface OrdenTrabajoCreada {
+  idSolicitudIngresada: number;
+  bus: string;
+  ppu: string;
+  ingreso: string;
+}
+
+export interface SoftDeleteResponse {
+  respuesta: number; // 1 = OK, 0 = no existe, -1 = error
+  mensaje: string;
+}
+
+// TYPES PARA VER DETALLES DE OT CORRECTIVO Y OT PREVENTIVO SEGUN ID_ORDE_TRABAJO //
+export type OrdenTrabajoBasic = {
+  numeroOrden: number;
+  numeroBus: number;
+  patente: string;
+  fechaIngreso: string;
+  fechaCierre?: string;
+  detalleIngreso: string;
+  detalleCierre?: string;
+  tecnicoResponsable?: string;
+  conductor?: string;
+  tipoOrden: "Correctiva" | "Preventiva";
+  estadoCodigo: number;
+  estadoDescripcion: string;
+  kilometraje?: number;
+  fechaUltimaMantencion?: string;
+  codigoFlota: number;
+  comentarioEntrada?: string;
+  otManager?: number;
+  nombreTaller?: string;
+  horaIngreso?: string;
+  horaCierre?: string;
+};
+
+export type OrdenTrabajoSistema = {
+  tipo: "Correctiva" | "Preventiva";
+  idRelacionFalla?: number; // si viene de correctiva
+  idSistemaPreventiva?: number; // si viene de preventiva
+  detalleFallaPrincipal?: string;
+  detalleFallaSecundaria?: string;
+  detalleSistemaPreventiva?: string;
+  mecanicoAsignado?: string;
+  idMecanicoAsignado?: number;
+};
+
+export type OrdenTrabajoInsumoNormalizado = {
+  tipo: "Correctiva" | "Preventiva";
+  idInsumo: number;
+  codigoInsumo: string;
+  descripcionInsumo: string;
+  cantidad: number;
+  estado: number;
+  estadoManager?: number;
+  idSiglas?: number;
+};
+
+export type OrdenTrabajoPersonalNormalizado = {
+  idPersonal: number;
+  nombrePersonal: string;
+  cargoPersonal?: string;
+  descripcionFalla?: string;
+  estadoFalla?: boolean;
+  tecnicoVidrio?: string;
+  idTecnicoVidrio?: number;
+};
+
+export type OrdenTrabajoDetailsNormalizado = {
+  basic: OrdenTrabajoBasic;
+  sistemas: OrdenTrabajoSistema[];
+  insumos: OrdenTrabajoInsumoNormalizado[];
+  personal: OrdenTrabajoPersonalNormalizado[];
+};

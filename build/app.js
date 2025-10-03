@@ -31,7 +31,12 @@ app.use("/api", route_1.default);
 // autentificacion
 app.use("/api/auth", index_1.authRouter);
 app.use("/api/auth", index_1.authPermissionRouter);
-// ordenes de trabajo
+////////////////// Ordenes de trabajo ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.use("/api/ordenDeTrabajo", index_2.OTGeneral);
 app.use("/api/ordenDeTrabajo", index_2.filtrosOrdenTrabajo);
+// Ordenes de trabajo - Sistemas y sub sistemas
+app.use("/api/ordenDeTrabajo", index_2.subSistemas);
+// Ordenes de trabajo - Detalles por id de orden
+app.use("/api/ordenDeTrabajo", index_2.idOrdenTrabajo);
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 exports.default = app;
