@@ -221,3 +221,68 @@ export type OrdenTrabajoDetailsNormalizado = {
   insumos: OrdenTrabajoInsumoNormalizado[];
   personal: OrdenTrabajoPersonalNormalizado[];
 };
+
+// types/OT/OrdenTrabajoFallas.ts
+
+// Payload de entrada para crear/editar una falla
+export interface UpdateFallaInput {
+  idOrden: number;
+  idRelacionFalla?: number | null; // si viene null => inserta, si trae valor => update
+  idFallaPrincipal: number;
+  idFallaSecundaria?: number | null;
+  idPersonalPrincipal?: number | null;
+  idPersonalSecundaria?: number | null;
+  idPerfilPrincipal?: number | null;
+  idPerfilSecundaria?: number | null;
+}
+
+// Respuesta del SP sp_updOrderFailuresNew
+export interface UpdateFallaResponse {
+  success: number; // 1 = ok, 0 = error
+  action: "INSERT" | "UPDATE" | "NO_CHANGE" | "ERROR";
+  affected_rows: number;
+  message: string;
+}
+
+export type DeleteFallaInput = {
+  item: number;
+  idRelacionFalla: number;
+};
+
+export type DeleteFallaResponse = {
+  success: boolean;
+  message: string;
+  supplies_deleted: number;
+  staff_deleted: number;
+  failures_deleted: number;
+};
+
+// TYPES PARA VER DETALLES DE OT PREVENTIVO SEGUN NUMERO DE BUS //
+
+export interface MantencionPreventiva {
+  codigoFlota: number;
+  ppu: string;
+  numeroBus: number;
+  numInternoPPU: string;
+  codigoTerminal: number;
+  estadoRegistro: string | null;
+  nombreTerminal: string;
+  terminalAbreviado: string | null;
+  direccionTerminal: string | null;
+  codigoZona: number | null;
+  codigoTaller: number | null;
+  detalle_modelo_chasis: string | null;
+  marcaBus: string | null;
+  kilometrajeProgramado: number | null;
+  fechaUltimaMantencion: string | null;
+  kilometrajeProximaMantencion: number | null;
+  estadoMantencion: string | null;
+  kilometrajeActual: number | null;
+  siglaProxMant: string | null;
+  idSigla: number | null;
+}
+
+export interface SiglaPreventiva {
+  id_man_prev: number;
+  siglas_preventivo: string;
+}

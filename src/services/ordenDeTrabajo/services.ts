@@ -12,6 +12,12 @@ import {
   OrdenTrabajoSistema,
   OrdenTrabajoInsumoNormalizado,
   OrdenTrabajoPersonalNormalizado,
+  UpdateFallaInput,
+  UpdateFallaResponse,
+  DeleteFallaInput,
+  DeleteFallaResponse,
+  MantencionPreventiva,
+  SiglaPreventiva,
 } from "../../types/ordenDeTrabajo/ordenDeTrabajo";
 
 // TABLA PRINCIPAL Y SUS FILTROS (TODOS LOS FILTROS)
@@ -134,76 +140,123 @@ export const getAllSubSistemas = async (
 };
 
 // Crear una nueva OT y sus fallas
+
 export const createOrdenTrabajo = async (
   pool: ConnectionPool,
   input: CreateOrdenTrabajoInput
 ): Promise<OrdenTrabajoCreada> => {
-  // 1. Insertar OT principal
-  const { recordset } = await pool
-    .request()
-    .input("id_personal_ingreso", sql.BigInt, input.id_personal_ingreso)
-    .input("id_tipo_orden", sql.TinyInt, input.id_tipo_orden)
-    .input("codigo_flota", sql.SmallInt, input.codigo_flota)
-    .input("detalle_ingreso", sql.VarChar(500), input.detalle_ingreso)
-    .input("fecha_programada", sql.DateTime2, input.fecha_programada ?? null)
-    .input("taller", sql.Int, input.codigo_taller)
-    .execute("MANT.dbo.sp_insNewOrder1");
+  console.log("=== Creando nueva Orden de Trabajo ===");
+  console.log("Payload recibido desde frontend:");
+  console.dir(input, { depth: null });
 
-  const orden = recordset?.[0] as OrdenTrabajoCreada;
-  const idOrden = orden?.idSolicitudIngresada;
+  let orden: OrdenTrabajoCreada | null = null;
+  let idOrden: number | null = null;
 
-  if (!idOrden) {
-    throw new Error("No se pudo obtener el ID de la nueva orden");
+  try {
+    // 1) Insertar OT principal
+    console.log("Ejecutando sp_insNewOrder1 con parámetros:");
+    console.log({
+      id_personal_ingreso: input.id_personal_ingreso,
+      id_tipo_orden: input.id_tipo_orden,
+      codigo_flota: input.codigo_flota,
+      detalle_ingreso: input.detalle_ingreso,
+      fecha_programada: input.fecha_programada,
+      taller: input.codigo_taller,
+    });
+
+    const { recordset } = await pool
+      .request()
+      .input("id_personal_ingreso", sql.BigInt, input.id_personal_ingreso)
+      .input("id_tipo_orden", sql.TinyInt, input.id_tipo_orden)
+      .input("codigo_flota", sql.SmallInt, input.codigo_flota)
+      .input("detalle_ingreso", sql.VarChar(500), input.detalle_ingreso)
+      .input("fecha_programada", sql.DateTime2, input.fecha_programada ?? null)
+      .input("taller", sql.Int, input.codigo_taller)
+      .execute("MANT.dbo.sp_insNewOrder1");
+
+    orden = recordset?.[0] as OrdenTrabajoCreada;
+    idOrden = orden?.idSolicitudIngresada ?? null;
+
+    if (!idOrden) {
+      console.error(
+        "No se pudo obtener ID de orden (recordset vacío):",
+        recordset
+      );
+      throw new Error(
+        "sp_insNewOrder1 no devolvió un idSolicitudIngresada válido"
+      );
+    }
+
+    console.log(` OT creada correctamente. ID: ${idOrden}`);
+  } catch (error) {
+    console.error(" Error ejecutando sp_insNewOrder1:", error);
+    throw new Error(`Error al insertar orden principal: ${error}`);
   }
 
-  // 2. Insertar fallas relacionadas
-  try {
-    for (const falla of input.fallas) {
+  // 2) Si es preventiva, terminamos aquí
+  if (input.id_tipo_orden === 2) {
+    console.log("OT Preventiva detectada. No se insertarán fallas.");
+    return orden!;
+  }
+
+  // 3) Insertar fallas relacionadas (solo si hay)
+  if (Array.isArray(input.fallas) && input.fallas.length > 0) {
+    try {
+      for (const falla of input.fallas) {
+        console.log("Insertando falla:", falla);
+
+        await pool
+          .request()
+          .input("id_orden_trabajo", sql.BigInt, idOrden)
+          .input("id_falla_principal", sql.BigInt, falla.id_falla_principal)
+          .input(
+            "id_falla_secundaria",
+            sql.BigInt,
+            falla.id_falla_secundaria ?? null
+          )
+          .input(
+            "id_personal_falla_principal",
+            sql.BigInt,
+            falla.id_personal_falla_principal ?? null
+          )
+          .input(
+            "id_personal_falla_secundaria",
+            sql.BigInt,
+            falla.id_personal_falla_secundaria ?? null
+          )
+          .input(
+            "id_perfil_principal",
+            sql.BigInt,
+            falla.id_perfil_principal ?? null
+          )
+          .input(
+            "id_perfil_secundaria",
+            sql.BigInt,
+            falla.id_perfil_secundaria ?? null
+          )
+          .input("servicio", sql.VarChar(40), input.servicio ?? null)
+          .execute("MANT.dbo.sp_insNewOrder2");
+      }
+      console.log("Fallas insertadas correctamente.");
+    } catch (error) {
+      console.error(" Error al insertar fallas. Ejecutando rollback:", error);
       await pool
         .request()
         .input("id_orden_trabajo", sql.BigInt, idOrden)
-        .input("id_falla_principal", sql.BigInt, falla.id_falla_principal)
-        .input(
-          "id_falla_secundaria",
-          sql.BigInt,
-          falla.id_falla_secundaria ?? null
-        )
-        .input(
-          "id_personal_falla_principal",
-          sql.BigInt,
-          falla.id_personal_falla_principal ?? null
-        )
-        .input(
-          "id_personal_falla_secundaria",
-          sql.BigInt,
-          falla.id_personal_falla_secundaria ?? null
-        )
-        .input(
-          "id_perfil_principal",
-          sql.BigInt,
-          falla.id_perfil_principal ?? null
-        )
-        .input(
-          "id_perfil_secundaria",
-          sql.BigInt,
-          falla.id_perfil_secundaria ?? null
-        )
-        .input("servicio", sql.VarChar(40), input.servicio ?? null)
-        .execute("MANT.dbo.sp_insNewOrder2");
+        .execute("MANT.dbo.sp_delRollbackNewOrder");
+      throw new Error(
+        `Error al insertar fallas: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
-  } catch (error) {
-    // rollback si falla
-    await pool
-      .request()
-      .input("id_orden_trabajo", sql.BigInt, idOrden)
-      .execute("MANT.dbo.sp_delRollbackNewOrder");
-    throw error;
+  } else {
+    console.log("No hay fallas que insertar.");
   }
 
-  return orden;
+  console.log("=== Orden creada correctamente ===");
+  return orden!;
 };
-
-// Eliminar una OT MODO ADMINISTRADOR
 
 /**
  * Ejecuta el soft delete de una orden de trabajo (registro_activo = 0 en cascada).
@@ -345,4 +398,75 @@ export const getOrderDetailsService = async (
     insumos,
     personal,
   };
+};
+
+export const updateFallaService = async (
+  pool: ConnectionPool,
+  input: UpdateFallaInput
+): Promise<UpdateFallaResponse> => {
+  const { recordset } = await pool
+    .request()
+    .input("item", sql.Int, 1)
+    .input("id_orden_trabajo", sql.BigInt, input.idOrden)
+    .input("id_relacion_falla", sql.BigInt, input.idRelacionFalla ?? null)
+    .input(
+      "id_personal_principal",
+      sql.BigInt,
+      input.idPersonalPrincipal ?? null
+    )
+    .input(
+      "id_personal_secundaria",
+      sql.BigInt,
+      input.idPersonalSecundaria ?? null
+    )
+    .input("id_falla_principal", sql.BigInt, input.idFallaPrincipal)
+    .input("id_falla_secundaria", sql.BigInt, input.idFallaSecundaria ?? null)
+    .input("id_perfil_principal", sql.BigInt, input.idPerfilPrincipal ?? null)
+    .input("id_perfil_secundaria", sql.BigInt, input.idPerfilSecundaria ?? null)
+    .execute<UpdateFallaResponse>("MANT.dbo.sp_updOrderFailuresNew");
+
+  return recordset[0];
+};
+
+// Eliminar una falla
+
+export const deleteFallaService = async (
+  pool: ConnectionPool,
+  input: DeleteFallaInput
+): Promise<DeleteFallaResponse> => {
+  const { recordset } = await pool
+    .request()
+    .input("item", sql.Int, input.item ?? 0)
+    .input("idRelacionFalla", sql.BigInt, input.idRelacionFalla)
+    .execute<DeleteFallaResponse>("MANT.dbo.sp_delOrderFailuresNew");
+
+  return recordset[0];
+};
+
+// GET DETALLES DE OT PREVENTIVO SEGUN NUMERO DE BUS //
+
+export const getLatestMaintenance = async (
+  pool: ConnectionPool,
+  numeroBus?: number,
+  placaPatente?: string
+): Promise<MantencionPreventiva[]> => {
+  const result = await pool
+    .request()
+    .input("numeroBus", sql.Int, numeroBus ?? null)
+    .input("placaPatente", sql.VarChar(20), placaPatente ?? null)
+    .execute("MANT.dbo.sp_getLatestMaintenance_GML_NEW");
+
+  return result.recordset as MantencionPreventiva[];
+};
+
+export const getSiglasPreventivas = async (
+  pool: ConnectionPool,
+  codigoFlota: number
+): Promise<SiglaPreventiva[]> => {
+  const { recordset } = await pool
+    .request()
+    .input("codigo_flota", sql.BigInt, codigoFlota)
+    .execute("MANT.dbo.sp_getManPrev");
+
+  return recordset ?? [];
 };

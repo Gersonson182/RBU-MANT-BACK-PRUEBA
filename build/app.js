@@ -38,5 +38,11 @@ app.use("/api/ordenDeTrabajo", index_2.filtrosOrdenTrabajo);
 app.use("/api/ordenDeTrabajo", index_2.subSistemas);
 // Ordenes de trabajo - Detalles por id de orden
 app.use("/api/ordenDeTrabajo", index_2.idOrdenTrabajo);
+// Eliminar una falla por id de relación falla
+app.use("/api/ordenDeTrabajo", index_2.idRelacionFalla);
+// Buscar mantención preventiva por numero de bus o placa paternte
+app.use("/api/ordenDeTrabajo", index_2.codigoBus);
+// Rellenar selector de siglas preventivas por código de flota
+app.use("/api/ordenDeTrabajo", index_2.codigoFlota);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 exports.default = app;

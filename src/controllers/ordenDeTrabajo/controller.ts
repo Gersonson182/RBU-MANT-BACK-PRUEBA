@@ -67,6 +67,7 @@ export const POST = async (req: Request, res: Response) => {
     const input: CreateOrdenTrabajoInput = req.body;
     const pool = await connectDB();
 
+    // Validaciones básicas
     if (
       !input.id_personal_ingreso ||
       !input.id_tipo_orden ||
@@ -79,13 +80,18 @@ export const POST = async (req: Request, res: Response) => {
         .json({ message: "Faltan datos obligatorios para crear la OT" });
     }
 
-    if (!input.fallas || input.fallas.length === 0) {
+    // Validar fallas solo si no es preventiva
+    if (
+      input.id_tipo_orden !== 2 &&
+      (!input.fallas || input.fallas.length === 0)
+    ) {
       return res
         .status(400)
         .json({ message: "Debe ingresar al menos una falla" });
     }
 
     const orden = await createOrdenTrabajo(pool, input);
+
     return res
       .status(201)
       .json({ message: "Orden creada con éxito", data: orden });

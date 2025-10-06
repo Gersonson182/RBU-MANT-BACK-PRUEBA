@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderDetailsService = exports.softDeleteOrdenTrabajo = exports.createOrdenTrabajo = exports.getAllSubSistemas = exports.getSubSistemas = exports.getSistemas = exports.getDataFiltrosMant = exports.getOrdenesTrabajo = void 0;
+exports.getSiglasPreventivas = exports.getLatestMaintenance = exports.deleteFallaService = exports.updateFallaService = exports.getOrderDetailsService = exports.softDeleteOrdenTrabajo = exports.createOrdenTrabajo = exports.getAllSubSistemas = exports.getSubSistemas = exports.getSistemas = exports.getDataFiltrosMant = exports.getOrdenesTrabajo = void 0;
 const mssql_1 = __importDefault(require("mssql"));
 // TABLA PRINCIPAL Y SUS FILTROS (TODOS LOS FILTROS)
 const getOrdenesTrabajo = async ({ pool, nroOT, codTaller, nroBus, estadoOT, tipoOT, fechaIngreso, fechaSalida, nroManager, pagina = 0, }) => {
@@ -93,49 +93,83 @@ const getAllSubSistemas = async (pool) => {
 exports.getAllSubSistemas = getAllSubSistemas;
 // Crear una nueva OT y sus fallas
 const createOrdenTrabajo = async (pool, input) => {
-    // 1. Insertar OT principal
-    const { recordset } = await pool
-        .request()
-        .input("id_personal_ingreso", mssql_1.default.BigInt, input.id_personal_ingreso)
-        .input("id_tipo_orden", mssql_1.default.TinyInt, input.id_tipo_orden)
-        .input("codigo_flota", mssql_1.default.SmallInt, input.codigo_flota)
-        .input("detalle_ingreso", mssql_1.default.VarChar(500), input.detalle_ingreso)
-        .input("fecha_programada", mssql_1.default.DateTime2, input.fecha_programada ?? null)
-        .input("taller", mssql_1.default.Int, input.codigo_taller)
-        .execute("MANT.dbo.sp_insNewOrder1");
-    const orden = recordset?.[0];
-    const idOrden = orden?.idSolicitudIngresada;
-    if (!idOrden) {
-        throw new Error("No se pudo obtener el ID de la nueva orden");
-    }
-    // 2. Insertar fallas relacionadas
+    console.log("=== Creando nueva Orden de Trabajo ===");
+    console.log("Payload recibido desde frontend:");
+    console.dir(input, { depth: null });
+    let orden = null;
+    let idOrden = null;
     try {
-        for (const falla of input.fallas) {
+        // 1) Insertar OT principal
+        console.log("Ejecutando sp_insNewOrder1 con parámetros:");
+        console.log({
+            id_personal_ingreso: input.id_personal_ingreso,
+            id_tipo_orden: input.id_tipo_orden,
+            codigo_flota: input.codigo_flota,
+            detalle_ingreso: input.detalle_ingreso,
+            fecha_programada: input.fecha_programada,
+            taller: input.codigo_taller,
+        });
+        const { recordset } = await pool
+            .request()
+            .input("id_personal_ingreso", mssql_1.default.BigInt, input.id_personal_ingreso)
+            .input("id_tipo_orden", mssql_1.default.TinyInt, input.id_tipo_orden)
+            .input("codigo_flota", mssql_1.default.SmallInt, input.codigo_flota)
+            .input("detalle_ingreso", mssql_1.default.VarChar(500), input.detalle_ingreso)
+            .input("fecha_programada", mssql_1.default.DateTime2, input.fecha_programada ?? null)
+            .input("taller", mssql_1.default.Int, input.codigo_taller)
+            .execute("MANT.dbo.sp_insNewOrder1");
+        orden = recordset?.[0];
+        idOrden = orden?.idSolicitudIngresada ?? null;
+        if (!idOrden) {
+            console.error("No se pudo obtener ID de orden (recordset vacío):", recordset);
+            throw new Error("sp_insNewOrder1 no devolvió un idSolicitudIngresada válido");
+        }
+        console.log(` OT creada correctamente. ID: ${idOrden}`);
+    }
+    catch (error) {
+        console.error(" Error ejecutando sp_insNewOrder1:", error);
+        throw new Error(`Error al insertar orden principal: ${error}`);
+    }
+    // 2) Si es preventiva, terminamos aquí
+    if (input.id_tipo_orden === 2) {
+        console.log("OT Preventiva detectada. No se insertarán fallas.");
+        return orden;
+    }
+    // 3) Insertar fallas relacionadas (solo si hay)
+    if (Array.isArray(input.fallas) && input.fallas.length > 0) {
+        try {
+            for (const falla of input.fallas) {
+                console.log("Insertando falla:", falla);
+                await pool
+                    .request()
+                    .input("id_orden_trabajo", mssql_1.default.BigInt, idOrden)
+                    .input("id_falla_principal", mssql_1.default.BigInt, falla.id_falla_principal)
+                    .input("id_falla_secundaria", mssql_1.default.BigInt, falla.id_falla_secundaria ?? null)
+                    .input("id_personal_falla_principal", mssql_1.default.BigInt, falla.id_personal_falla_principal ?? null)
+                    .input("id_personal_falla_secundaria", mssql_1.default.BigInt, falla.id_personal_falla_secundaria ?? null)
+                    .input("id_perfil_principal", mssql_1.default.BigInt, falla.id_perfil_principal ?? null)
+                    .input("id_perfil_secundaria", mssql_1.default.BigInt, falla.id_perfil_secundaria ?? null)
+                    .input("servicio", mssql_1.default.VarChar(40), input.servicio ?? null)
+                    .execute("MANT.dbo.sp_insNewOrder2");
+            }
+            console.log("Fallas insertadas correctamente.");
+        }
+        catch (error) {
+            console.error(" Error al insertar fallas. Ejecutando rollback:", error);
             await pool
                 .request()
                 .input("id_orden_trabajo", mssql_1.default.BigInt, idOrden)
-                .input("id_falla_principal", mssql_1.default.BigInt, falla.id_falla_principal)
-                .input("id_falla_secundaria", mssql_1.default.BigInt, falla.id_falla_secundaria ?? null)
-                .input("id_personal_falla_principal", mssql_1.default.BigInt, falla.id_personal_falla_principal ?? null)
-                .input("id_personal_falla_secundaria", mssql_1.default.BigInt, falla.id_personal_falla_secundaria ?? null)
-                .input("id_perfil_principal", mssql_1.default.BigInt, falla.id_perfil_principal ?? null)
-                .input("id_perfil_secundaria", mssql_1.default.BigInt, falla.id_perfil_secundaria ?? null)
-                .input("servicio", mssql_1.default.VarChar(40), input.servicio ?? null)
-                .execute("MANT.dbo.sp_insNewOrder2");
+                .execute("MANT.dbo.sp_delRollbackNewOrder");
+            throw new Error(`Error al insertar fallas: ${error instanceof Error ? error.message : error}`);
         }
     }
-    catch (error) {
-        // rollback si falla
-        await pool
-            .request()
-            .input("id_orden_trabajo", mssql_1.default.BigInt, idOrden)
-            .execute("MANT.dbo.sp_delRollbackNewOrder");
-        throw error;
+    else {
+        console.log("No hay fallas que insertar.");
     }
+    console.log("=== Orden creada correctamente ===");
     return orden;
 };
 exports.createOrdenTrabajo = createOrdenTrabajo;
-// Eliminar una OT MODO ADMINISTRADOR
 /**
  * Ejecuta el soft delete de una orden de trabajo (registro_activo = 0 en cascada).
  */
@@ -249,3 +283,47 @@ const getOrderDetailsService = async (pool, idOrden) => {
     };
 };
 exports.getOrderDetailsService = getOrderDetailsService;
+const updateFallaService = async (pool, input) => {
+    const { recordset } = await pool
+        .request()
+        .input("item", mssql_1.default.Int, 1)
+        .input("id_orden_trabajo", mssql_1.default.BigInt, input.idOrden)
+        .input("id_relacion_falla", mssql_1.default.BigInt, input.idRelacionFalla ?? null)
+        .input("id_personal_principal", mssql_1.default.BigInt, input.idPersonalPrincipal ?? null)
+        .input("id_personal_secundaria", mssql_1.default.BigInt, input.idPersonalSecundaria ?? null)
+        .input("id_falla_principal", mssql_1.default.BigInt, input.idFallaPrincipal)
+        .input("id_falla_secundaria", mssql_1.default.BigInt, input.idFallaSecundaria ?? null)
+        .input("id_perfil_principal", mssql_1.default.BigInt, input.idPerfilPrincipal ?? null)
+        .input("id_perfil_secundaria", mssql_1.default.BigInt, input.idPerfilSecundaria ?? null)
+        .execute("MANT.dbo.sp_updOrderFailuresNew");
+    return recordset[0];
+};
+exports.updateFallaService = updateFallaService;
+// Eliminar una falla
+const deleteFallaService = async (pool, input) => {
+    const { recordset } = await pool
+        .request()
+        .input("item", mssql_1.default.Int, input.item ?? 0)
+        .input("idRelacionFalla", mssql_1.default.BigInt, input.idRelacionFalla)
+        .execute("MANT.dbo.sp_delOrderFailuresNew");
+    return recordset[0];
+};
+exports.deleteFallaService = deleteFallaService;
+// GET DETALLES DE OT PREVENTIVO SEGUN NUMERO DE BUS //
+const getLatestMaintenance = async (pool, numeroBus, placaPatente) => {
+    const result = await pool
+        .request()
+        .input("numeroBus", mssql_1.default.Int, numeroBus ?? null)
+        .input("placaPatente", mssql_1.default.VarChar(20), placaPatente ?? null)
+        .execute("MANT.dbo.sp_getLatestMaintenance_GML_NEW");
+    return result.recordset;
+};
+exports.getLatestMaintenance = getLatestMaintenance;
+const getSiglasPreventivas = async (pool, codigoFlota) => {
+    const { recordset } = await pool
+        .request()
+        .input("codigo_flota", mssql_1.default.BigInt, codigoFlota)
+        .execute("MANT.dbo.sp_getManPrev");
+    return recordset ?? [];
+};
+exports.getSiglasPreventivas = getSiglasPreventivas;

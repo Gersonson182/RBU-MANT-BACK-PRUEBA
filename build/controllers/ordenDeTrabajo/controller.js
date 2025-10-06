@@ -56,6 +56,7 @@ const POST = async (req, res) => {
     try {
         const input = req.body;
         const pool = await (0, db_1.connectDB)();
+        // Validaciones básicas
         if (!input.id_personal_ingreso ||
             !input.id_tipo_orden ||
             !input.codigo_flota ||
@@ -65,7 +66,9 @@ const POST = async (req, res) => {
                 .status(400)
                 .json({ message: "Faltan datos obligatorios para crear la OT" });
         }
-        if (!input.fallas || input.fallas.length === 0) {
+        // Validar fallas solo si no es preventiva
+        if (input.id_tipo_orden !== 2 &&
+            (!input.fallas || input.fallas.length === 0)) {
             return res
                 .status(400)
                 .json({ message: "Debe ingresar al menos una falla" });
