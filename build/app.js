@@ -44,5 +44,11 @@ app.use("/api/ordenDeTrabajo", index_2.idRelacionFalla);
 app.use("/api/ordenDeTrabajo", index_2.codigoBus);
 // Rellenar selector de siglas preventivas por código de flota
 app.use("/api/ordenDeTrabajo", index_2.codigoFlota);
+// OT Preventivo cuando se asigna una falla
+app.use("/api/ordenDeTrabajo", index_2.otPreventivo);
+// Buscar siglas preventivas por código de flota y id de orden
+app.use("/api/ordenDeTrabajo", index_2.siglasPreventivasbyFlotaandIdOrden);
+// Buscar eliminar mantención preventiva por id de relación falla
+app.use("/api/ordenDeTrabajo", index_2.idRelManPrev);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 exports.default = app;

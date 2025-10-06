@@ -18,6 +18,13 @@ import {
   DeleteFallaResponse,
   MantencionPreventiva,
   SiglaPreventiva,
+  MantencionPreventivaCrear,
+  MantencionPreventivaResponse,
+  SiglaPreventivaRegistro,
+  GetSiglasPreventivasByFlotaInput,
+  GetSiglasPreventivasByFlotaResponse,
+  DeleteMantencionPreventivaInput,
+  DeleteMantencionPreventivaResponse,
 } from "../../types/ordenDeTrabajo/ordenDeTrabajo";
 
 // TABLA PRINCIPAL Y SUS FILTROS (TODOS LOS FILTROS)
@@ -469,4 +476,116 @@ export const getSiglasPreventivas = async (
     .execute("MANT.dbo.sp_getManPrev");
 
   return recordset ?? [];
+};
+
+// Crear una nueva OT preventiva enlazada a una falla
+
+export const createMantencionPreventivaService = async (
+  pool: ConnectionPool,
+  data: MantencionPreventivaCrear
+): Promise<MantencionPreventivaResponse> => {
+  const {
+    id_orden_trabajo,
+    id_mantencion_preventiva,
+    id_personal_mantencion_preventiva,
+    personal_reporto,
+    id_perfil_personal_mantencion_preventiva,
+    id_estado_mantencion,
+    ppu,
+    siglas_mantenimiento,
+  } = data;
+
+  try {
+    await pool
+      .request()
+      .input("id_orden_trabajo", sql.BigInt, id_orden_trabajo)
+      .input("id_mantencion_preventiva", sql.Int, id_mantencion_preventiva)
+      .input(
+        "id_personal_mantencion_preventiva",
+        sql.BigInt,
+        id_personal_mantencion_preventiva
+      )
+      .input("personal_reporto", sql.VarChar(200), personal_reporto)
+      .input(
+        "id_perfil_personal_mantencion_preventiva",
+        sql.SmallInt,
+        id_perfil_personal_mantencion_preventiva
+      )
+      .input("id_estado_mantencion", sql.SmallInt, id_estado_mantencion)
+      .input("ppu", sql.VarChar(8), ppu)
+      .input("siglas_mantenimiento", sql.VarChar(200), siglas_mantenimiento)
+      .execute("MANT.dbo.man_procInsRelacionMantencionPreventiva_NEW_GML");
+
+    return {
+      success: true,
+      message: "Registro de mantención preventiva creado correctamente.",
+    };
+  } catch (error: any) {
+    console.error("Error en createMantencionPreventivaService:", error);
+    return {
+      success: false,
+      message: error.message || "Error al registrar la mantención preventiva.",
+    };
+  }
+};
+
+// Busca la ot preventiva por numero de bus o placa paternte y id de orden para mostrarlo de primera instancia al momento de ingresar a esa ot en especifica
+
+export const getSiglasPreventivasByFlotaService = async (
+  pool: ConnectionPool,
+  input: GetSiglasPreventivasByFlotaInput
+): Promise<GetSiglasPreventivasByFlotaResponse> => {
+  const { codigo_flota, id_orden_trabajo } = input;
+
+  try {
+    const result = await pool
+      .request()
+      .input("codigo_flota", sql.Int, codigo_flota)
+      .input("id_orden_trabajo", sql.BigInt, id_orden_trabajo)
+      .execute("MANT.dbo.man_procGetMantencionesPreventivasByFlota_GML");
+
+    const data = result.recordset as SiglaPreventivaRegistro[];
+
+    return {
+      success: true,
+      message: "Consulta exitosa",
+      data,
+    };
+  } catch (error: any) {
+    console.error("Error en getSiglasPreventivasByFlotaService:", error);
+    return {
+      success: false,
+      message: error.message || "Error al obtener siglas preventivas",
+      data: [],
+    };
+  }
+};
+
+// Eliminar una falla preventiva
+
+export const deleteMantencionPreventivaService = async (
+  pool: ConnectionPool,
+  data: DeleteMantencionPreventivaInput
+): Promise<DeleteMantencionPreventivaResponse> => {
+  const { id_rel_man_prev } = data;
+
+  try {
+    const result = await pool
+      .request()
+      .input("id_rel_man_prev", sql.BigInt, id_rel_man_prev)
+      .execute("MANT.dbo.sp_delManPrev");
+
+    const mensaje = result.recordset?.[0]?.respuesta ?? "Error desconocido";
+
+    return {
+      success: mensaje.includes("correctamente"),
+      message: mensaje,
+    };
+  } catch (error: any) {
+    console.error("Error en deleteMantencionPreventivaService:", error);
+    return {
+      success: false,
+      message: error.message || "Error al eliminar mantención preventiva.",
+    };
+  }
 };

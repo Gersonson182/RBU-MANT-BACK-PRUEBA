@@ -1,4 +1,3 @@
-// controllers/OT/mantencionPreventivaController.ts
 import type { Request, Response } from "express";
 import { connectDB } from "../../../helpers/db";
 import { getSiglasPreventivas } from "../../../services/ordenDeTrabajo/services.js";

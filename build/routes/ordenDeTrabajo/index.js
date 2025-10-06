@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.codigoFlota = exports.codigoBus = exports.idRelacionFalla = exports.idOrdenTrabajo = exports.subSistemas = exports.filtrosOrdenTrabajo = exports.OTGeneral = void 0;
+exports.idRelManPrev = exports.siglasPreventivasbyFlotaandIdOrden = exports.otPreventivo = exports.codigoFlota = exports.codigoBus = exports.idRelacionFalla = exports.idOrdenTrabajo = exports.subSistemas = exports.filtrosOrdenTrabajo = exports.OTGeneral = void 0;
 const route_1 = __importDefault(require("./route"));
 exports.OTGeneral = route_1.default;
 const route_2 = __importDefault(require("./filtrosOrdenTrabajo/route"));
@@ -18,3 +18,9 @@ const controller_1 = __importDefault(require("./codigo_bus/controller"));
 exports.codigoBus = controller_1.default;
 const route_6 = __importDefault(require("./codigo_flota/route"));
 exports.codigoFlota = route_6.default;
+const route_7 = __importDefault(require("./id_orden_trabajo/ot_preventivo/route"));
+exports.otPreventivo = route_7.default;
+const route_8 = __importDefault(require("./codigo_flota/id_orden_trabajo/route"));
+exports.siglasPreventivasbyFlotaandIdOrden = route_8.default;
+const route_9 = __importDefault(require("./id_rel_man_prev/route"));
+exports.idRelManPrev = route_9.default;

@@ -5,6 +5,9 @@ import idOrdenTrabajo from "./id_orden_trabajo/route";
 import idRelacionFalla from "./id_relacion_falla/route";
 import codigoBus from "./codigo_bus/controller";
 import codigoFlota from "./codigo_flota/route";
+import otPreventivo from "./id_orden_trabajo/ot_preventivo/route";
+import siglasPreventivasbyFlotaandIdOrden from "./codigo_flota/id_orden_trabajo/route";
+import idRelManPrev from "./id_rel_man_prev/route";
 
 export { OTGeneral };
 export { filtrosOrdenTrabajo };
@@ -13,3 +16,6 @@ export { idOrdenTrabajo };
 export { idRelacionFalla };
 export { codigoBus };
 export { codigoFlota };
+export { otPreventivo };
+export { siglasPreventivasbyFlotaandIdOrden };
+export { idRelManPrev };

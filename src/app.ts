@@ -13,6 +13,9 @@ import {
   idRelacionFalla,
   codigoBus,
   codigoFlota,
+  otPreventivo,
+  siglasPreventivasbyFlotaandIdOrden,
+  idRelManPrev,
 } from "./routes/ordenDeTrabajo/index";
 
 const originPage = [
@@ -65,6 +68,15 @@ app.use("/api/ordenDeTrabajo", codigoBus);
 
 // Rellenar selector de siglas preventivas por código de flota
 app.use("/api/ordenDeTrabajo", codigoFlota);
+
+// OT Preventivo cuando se asigna una falla
+app.use("/api/ordenDeTrabajo", otPreventivo);
+
+// Buscar siglas preventivas por código de flota y id de orden
+app.use("/api/ordenDeTrabajo", siglasPreventivasbyFlotaandIdOrden);
+
+// Buscar eliminar mantención preventiva por id de relación falla
+app.use("/api/ordenDeTrabajo", idRelManPrev);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export default app;

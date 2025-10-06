@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSiglasPreventivas = exports.getLatestMaintenance = exports.deleteFallaService = exports.updateFallaService = exports.getOrderDetailsService = exports.softDeleteOrdenTrabajo = exports.createOrdenTrabajo = exports.getAllSubSistemas = exports.getSubSistemas = exports.getSistemas = exports.getDataFiltrosMant = exports.getOrdenesTrabajo = void 0;
+exports.deleteMantencionPreventivaService = exports.getSiglasPreventivasByFlotaService = exports.createMantencionPreventivaService = exports.getSiglasPreventivas = exports.getLatestMaintenance = exports.deleteFallaService = exports.updateFallaService = exports.getOrderDetailsService = exports.softDeleteOrdenTrabajo = exports.createOrdenTrabajo = exports.getAllSubSistemas = exports.getSubSistemas = exports.getSistemas = exports.getDataFiltrosMant = exports.getOrdenesTrabajo = void 0;
 const mssql_1 = __importDefault(require("mssql"));
 // TABLA PRINCIPAL Y SUS FILTROS (TODOS LOS FILTROS)
 const getOrdenesTrabajo = async ({ pool, nroOT, codTaller, nroBus, estadoOT, tipoOT, fechaIngreso, fechaSalida, nroManager, pagina = 0, }) => {
@@ -327,3 +327,81 @@ const getSiglasPreventivas = async (pool, codigoFlota) => {
     return recordset ?? [];
 };
 exports.getSiglasPreventivas = getSiglasPreventivas;
+// Crear una nueva OT preventiva enlazada a una falla
+const createMantencionPreventivaService = async (pool, data) => {
+    const { id_orden_trabajo, id_mantencion_preventiva, id_personal_mantencion_preventiva, personal_reporto, id_perfil_personal_mantencion_preventiva, id_estado_mantencion, ppu, siglas_mantenimiento, } = data;
+    try {
+        await pool
+            .request()
+            .input("id_orden_trabajo", mssql_1.default.BigInt, id_orden_trabajo)
+            .input("id_mantencion_preventiva", mssql_1.default.Int, id_mantencion_preventiva)
+            .input("id_personal_mantencion_preventiva", mssql_1.default.BigInt, id_personal_mantencion_preventiva)
+            .input("personal_reporto", mssql_1.default.VarChar(200), personal_reporto)
+            .input("id_perfil_personal_mantencion_preventiva", mssql_1.default.SmallInt, id_perfil_personal_mantencion_preventiva)
+            .input("id_estado_mantencion", mssql_1.default.SmallInt, id_estado_mantencion)
+            .input("ppu", mssql_1.default.VarChar(8), ppu)
+            .input("siglas_mantenimiento", mssql_1.default.VarChar(200), siglas_mantenimiento)
+            .execute("MANT.dbo.man_procInsRelacionMantencionPreventiva_NEW_GML");
+        return {
+            success: true,
+            message: "Registro de mantención preventiva creado correctamente.",
+        };
+    }
+    catch (error) {
+        console.error("Error en createMantencionPreventivaService:", error);
+        return {
+            success: false,
+            message: error.message || "Error al registrar la mantención preventiva.",
+        };
+    }
+};
+exports.createMantencionPreventivaService = createMantencionPreventivaService;
+// Busca la ot preventiva por numero de bus o placa paternte y id de orden para mostrarlo de primera instancia al momento de ingresar a esa ot en especifica
+const getSiglasPreventivasByFlotaService = async (pool, input) => {
+    const { codigo_flota, id_orden_trabajo } = input;
+    try {
+        const result = await pool
+            .request()
+            .input("codigo_flota", mssql_1.default.Int, codigo_flota)
+            .input("id_orden_trabajo", mssql_1.default.BigInt, id_orden_trabajo)
+            .execute("MANT.dbo.man_procGetMantencionesPreventivasByFlota_GML");
+        const data = result.recordset;
+        return {
+            success: true,
+            message: "Consulta exitosa",
+            data,
+        };
+    }
+    catch (error) {
+        console.error("Error en getSiglasPreventivasByFlotaService:", error);
+        return {
+            success: false,
+            message: error.message || "Error al obtener siglas preventivas",
+            data: [],
+        };
+    }
+};
+exports.getSiglasPreventivasByFlotaService = getSiglasPreventivasByFlotaService;
+// Eliminar una falla preventiva
+const deleteMantencionPreventivaService = async (pool, data) => {
+    const { id_rel_man_prev } = data;
+    try {
+        const result = await pool
+            .request()
+            .input("id_rel_man_prev", mssql_1.default.BigInt, id_rel_man_prev)
+            .execute("MANT.dbo.sp_delManPrev");
+        const mensaje = result.recordset?.[0]?.respuesta ?? "Error desconocido";
+        return {
+            success: mensaje.includes("correctamente"),
+            message: mensaje,
+        };
+    }
+    catch (error) {
+        console.error("Error en deleteMantencionPreventivaService:", error);
+        return {
+            success: false,
+            message: error.message || "Error al eliminar mantención preventiva.",
+        };
+    }
+};
+exports.deleteMantencionPreventivaService = deleteMantencionPreventivaService;

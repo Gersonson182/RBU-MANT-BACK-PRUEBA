@@ -286,3 +286,52 @@ export interface SiglaPreventiva {
   id_man_prev: number;
   siglas_preventivo: string;
 }
+
+// Orden de trabajo preventivo - Setear los valores para poder crear una nueva OT preventiva
+
+export interface MantencionPreventivaCrear {
+  id_orden_trabajo: number;
+  id_mantencion_preventiva: number;
+  id_personal_mantencion_preventiva: number;
+  personal_reporto: string;
+  id_perfil_personal_mantencion_preventiva: number;
+  id_estado_mantencion: number; // 1 = En Ejeccion, 2 = Rechazada, 3 = Ejecutada, 4 = Aprobada y 5 = Tecnico Eliminado
+  ppu: string;
+  siglas_mantenimiento: string;
+}
+
+export interface MantencionPreventivaResponse {
+  success: boolean;
+  message: string;
+}
+
+// Orden de trabajo preventivo - Mostrar el dato que ya esta registrado en el selector
+
+export interface SiglaPreventivaRegistro {
+  id_man_prev: number;
+  siglas_preventivo: string;
+  ya_registrada: number; // 1 si ya está registrada, 0 si no
+}
+
+export interface GetSiglasPreventivasByFlotaInput {
+  codigo_flota: number;
+  id_orden_trabajo: number;
+}
+
+export interface GetSiglasPreventivasByFlotaResponse {
+  success: boolean;
+  message: string;
+  data: SiglaPreventivaRegistro[];
+}
+
+// ELiminar una falla preventiva
+
+export interface DeleteMantencionPreventivaInput {
+  id_rel_man_prev: number;
+}
+
+//  Respuesta del procedimiento sp_delManPrev
+export interface DeleteMantencionPreventivaResponse {
+  success: boolean;
+  message: string;
+}

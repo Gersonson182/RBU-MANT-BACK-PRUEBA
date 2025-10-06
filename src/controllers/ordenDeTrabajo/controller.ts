@@ -6,6 +6,7 @@ import {
   softDeleteOrdenTrabajo,
 } from "../../services/ordenDeTrabajo/services";
 import type { CreateOrdenTrabajoInput } from "../../types/ordenDeTrabajo/ordenDeTrabajo";
+
 const toNumber = (val: any): number | undefined =>
   val !== undefined && !isNaN(Number(val)) ? Number(val) : undefined;
 
